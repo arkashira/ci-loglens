@@ -1,19 +1,43 @@
 import pytest
-from ci_loglens import parse_log_file, ErrorSummary
+from ci_loglens import CiLoglens, Error
 
-def test_parse_log_file(tmp_path):
-    log_file_path = tmp_path / "example.log"
-    log_file_path.write_text("Error: something went wrong\nInfo: this is fine\nException: another error")
-    error_summary = parse_log_file(log_file_path)
-    assert error_summary.errors == ["Error: something went wrong", "Exception: another error"]
+def test_train_model():
+    historical_failures = [
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 2', 'root_cause': 'Root Cause 2'}
+    ]
+    ci_loglens = CiLoglens(historical_failures)
+    assert ci_loglens.classification_model['Error 1'] == ['Root Cause 1', 'Root Cause 1']
 
-def test_parse_log_file_not_found():
-    with pytest.raises(ValueError):
-        parse_log_file("non_existent_log_file.log")
+def test_suggest_root_cause():
+    historical_failures = [
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 2', 'root_cause': 'Root Cause 2'}
+    ]
+    ci_loglens = CiLoglens(historical_failures)
+    suggestion = ci_loglens.suggest_root_cause('Error 1')
+    assert suggestion.root_cause == 'Root Cause 1'
+    assert suggestion.confidence_score == 1.0
 
-def test_parse_log_file_empty():
-    log_file_path = "empty_log_file.log"
-    with open(log_file_path, 'w') as file:
-        file.write("")
-    error_summary = parse_log_file(log_file_path)
-    assert error_summary.errors == []
+def test_suggest_root_cause_unknown_error():
+    historical_failures = [
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 2', 'root_cause': 'Root Cause 2'}
+    ]
+    ci_loglens = CiLoglens(historical_failures)
+    suggestion = ci_loglens.suggest_root_cause('Unknown Error')
+    assert suggestion.root_cause is None
+    assert suggestion.confidence_score == 0.0
+
+def test_display_suggestions():
+    historical_failures = [
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 1', 'root_cause': 'Root Cause 1'},
+        {'error_message': 'Error 2', 'root_cause': 'Root Cause 2'}
+    ]
+    ci_loglens = CiLoglens(historical_failures)
+    errors = ['Error 1', 'Error 2']
+    ci_loglens.display_suggestions(errors)

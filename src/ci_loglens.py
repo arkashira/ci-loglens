@@ -1,28 +1,43 @@
-import argparse
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 
 @dataclass
-class ErrorSummary:
-    errors: List[str]
+class Error:
+    message: str
+    root_cause: str = None
+    confidence_score: float = 0.0
+    documentation_link: str = None
 
-def parse_log_file(log_file_path: str) -> ErrorSummary:
-    try:
-        with open(log_file_path, 'r') as file:
-            log_content = file.read()
-            # Simple AI parser: extract lines containing "error" or "exception"
-            error_lines = [line.strip() for line in log_content.splitlines() if "error" in line.lower() or "exception" in line.lower()]
-            return ErrorSummary(errors=error_lines)
-    except FileNotFoundError:
-        raise ValueError(f"Log file not found: {log_file_path}")
+class CiLoglens:
+    def __init__(self, historical_failures: List[Dict]):
+        self.historical_failures = historical_failures
+        self.classification_model = self.train_model()
 
-def main():
-    parser = argparse.ArgumentParser(description="CI Log Lens")
-    parser.add_argument("--log", help="Path to log file", required=True)
-    args = parser.parse_args()
-    error_summary = parse_log_file(args.log)
-    print(json.dumps({"errors": error_summary.errors}, indent=4))
+    def train_model(self):
+        # Simple classification model based on historical failures
+        model = {}
+        for failure in self.historical_failures:
+            error_message = failure['error_message']
+            root_cause = failure['root_cause']
+            if error_message not in model:
+                model[error_message] = []
+            model[error_message].append(root_cause)
+        return model
 
-if __name__ == "__main__":
-    main()
+    def suggest_root_cause(self, error_message: str) -> Error:
+        if error_message in self.classification_model:
+            root_causes = self.classification_model[error_message]
+            most_common_root_cause = max(set(root_causes), key=root_causes.count)
+            confidence_score = root_causes.count(most_common_root_cause) / len(root_causes)
+            return Error(error_message, most_common_root_cause, confidence_score, 'https://example.com/docs')
+        else:
+            return Error(error_message)
+
+    def display_suggestions(self, errors: List[str]):
+        for error in errors:
+            suggestion = self.suggest_root_cause(error)
+            print(f'Error: {suggestion.message}')
+            print(f'Suggested Root Cause: {suggestion.root_cause} (Confidence Score: {suggestion.confidence_score})')
+            print(f'Documentation Link: {suggestion.documentation_link}')
+            print('---')

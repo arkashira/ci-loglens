@@ -1,5 +1,10 @@
-# CI Log Lens
+# Ci Loglens
+AI-Powered Error Detection & Root-Cause Analysis
 
-A command-line tool to ingest a log file, invoke an AI parser, and output a concise error summary.
+## Introduction
+Ci Loglens is a tool that suggests the most likely root cause for each error, helping DevOps engineers resolve issues faster.
 
-## Installation
+## Usage
+1. Train the model using historical CI failures.
+2. Use the trained model to suggest the root cause for new errors.
+3. Display the suggestions in a collapsible panel next to each error.
