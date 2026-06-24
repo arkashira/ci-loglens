@@ -1,29 +1,44 @@
-import json 
-from dataclasses import dataclass 
-from datetime import datetime, timedelta
-from typing import List
+import json
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict
+
+class CITool(Enum):
+    AZURE_DEVOPS = "azure_devops"
+    GITHUB_ACTIONS = "github_actions"
+    JENKINS = "jenkins"
 
 @dataclass
-class ErrorCause:
-    cause: str
-    confidence_score: float
-    timestamp: datetime
+class LogLensConfig:
+    ci_tool: CITool
+    ci_tool_config: Dict[str, str]
 
-class CiLoglens:
-    def __init__(self):
-        self.error_causes = []
+class LogLens:
+    def __init__(self, config: LogLensConfig):
+        self.config = config
 
-    def add_error_cause(self, cause: str, confidence_score: float, timestamp: datetime):
-        self.error_causes.append(ErrorCause(cause, confidence_score, timestamp))
+    def connect_ci_tool(self):
+        if self.config.ci_tool == CITool.AZURE_DEVOPS:
+            return self._connect_azure_devops()
+        elif self.config.ci_tool == CITool.GITHUB_ACTIONS:
+            return self._connect_github_actions()
+        elif self.config.ci_tool == CITool.JENKINS:
+            return self._connect_jenkins()
+        else:
+            raise ValueError("Unsupported CI tool")
 
-    def get_top_error_causes(self, num_causes: int = 5) -> List[ErrorCause]:
-        return sorted(self.error_causes, key=lambda x: x.confidence_score, reverse=True)[:num_causes]
+    def _connect_azure_devops(self):
+        # Simulate connection to Azure DevOps
+        return {"connected": True, "ci_tool": CITool.AZURE_DEVOPS.value}
 
-    def filter_by_pipeline(self, pipeline: str) -> List[ErrorCause]:
-        return [cause for cause in self.error_causes if cause.cause.startswith(pipeline)]
+    def _connect_github_actions(self):
+        # Simulate connection to GitHub Actions
+        return {"connected": True, "ci_tool": CITool.GITHUB_ACTIONS.value}
 
-    def filter_by_date_range(self, start_date: datetime, end_date: datetime) -> List[ErrorCause]:
-        return [cause for cause in self.error_causes if start_date <= cause.timestamp < end_date]
+    def _connect_jenkins(self):
+        # Simulate connection to Jenkins
+        return {"connected": True, "ci_tool": CITool.JENKINS.value}
 
-    def filter_by_error_type(self, error_type: str) -> List[ErrorCause]:
-        return [cause for cause in self.error_causes if cause.cause.endswith(error_type)]
+    def analyze_ci_logs(self):
+        # Simulate log analysis
+        return {"logs_analyzed": True}

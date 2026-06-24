@@ -1,8 +1,14 @@
-# ci-loglens
-A Python project for displaying the top 5 error causes for recent runs.
+# CI LogLens
+
+CI LogLens is a Python project that connects to various CI tools and analyzes logs.
 
 ## Usage
-1. Create a `CiLoglens` object.
-2. Add error causes using the `add_error_cause` method.
-3. Get the top error causes using the `get_top_error_causes` method.
-4. Filter error causes by pipeline, date range, or error type using the corresponding methods.
+
+1. Create a `LogLensConfig` object with the desired CI tool and configuration.
+2. Create a `LogLens` object with the `LogLensConfig` object.
+3. Call the `connect_ci_tool` method to connect to the CI tool.
+4. Call the `analyze_ci_logs` method to analyze the logs.
+
+## Testing
+
+Run the tests using `pytest`:
