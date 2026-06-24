@@ -1,43 +1,29 @@
-import json
-from dataclasses import dataclass
-from typing import List, Dict
+import json 
+from dataclasses import dataclass 
+from datetime import datetime, timedelta
+from typing import List
 
 @dataclass
-class Error:
-    message: str
-    root_cause: str = None
-    confidence_score: float = 0.0
-    documentation_link: str = None
+class ErrorCause:
+    cause: str
+    confidence_score: float
+    timestamp: datetime
 
 class CiLoglens:
-    def __init__(self, historical_failures: List[Dict]):
-        self.historical_failures = historical_failures
-        self.classification_model = self.train_model()
+    def __init__(self):
+        self.error_causes = []
 
-    def train_model(self):
-        # Simple classification model based on historical failures
-        model = {}
-        for failure in self.historical_failures:
-            error_message = failure['error_message']
-            root_cause = failure['root_cause']
-            if error_message not in model:
-                model[error_message] = []
-            model[error_message].append(root_cause)
-        return model
+    def add_error_cause(self, cause: str, confidence_score: float, timestamp: datetime):
+        self.error_causes.append(ErrorCause(cause, confidence_score, timestamp))
 
-    def suggest_root_cause(self, error_message: str) -> Error:
-        if error_message in self.classification_model:
-            root_causes = self.classification_model[error_message]
-            most_common_root_cause = max(set(root_causes), key=root_causes.count)
-            confidence_score = root_causes.count(most_common_root_cause) / len(root_causes)
-            return Error(error_message, most_common_root_cause, confidence_score, 'https://example.com/docs')
-        else:
-            return Error(error_message)
+    def get_top_error_causes(self, num_causes: int = 5) -> List[ErrorCause]:
+        return sorted(self.error_causes, key=lambda x: x.confidence_score, reverse=True)[:num_causes]
 
-    def display_suggestions(self, errors: List[str]):
-        for error in errors:
-            suggestion = self.suggest_root_cause(error)
-            print(f'Error: {suggestion.message}')
-            print(f'Suggested Root Cause: {suggestion.root_cause} (Confidence Score: {suggestion.confidence_score})')
-            print(f'Documentation Link: {suggestion.documentation_link}')
-            print('---')
+    def filter_by_pipeline(self, pipeline: str) -> List[ErrorCause]:
+        return [cause for cause in self.error_causes if cause.cause.startswith(pipeline)]
+
+    def filter_by_date_range(self, start_date: datetime, end_date: datetime) -> List[ErrorCause]:
+        return [cause for cause in self.error_causes if start_date <= cause.timestamp < end_date]
+
+    def filter_by_error_type(self, error_type: str) -> List[ErrorCause]:
+        return [cause for cause in self.error_causes if cause.cause.endswith(error_type)]

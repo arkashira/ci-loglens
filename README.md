@@ -1,10 +1,8 @@
-# Ci Loglens
-AI-Powered Error Detection & Root-Cause Analysis
-
-## Introduction
-Ci Loglens is a tool that suggests the most likely root cause for each error, helping DevOps engineers resolve issues faster.
+# ci-loglens
+A Python project for displaying the top 5 error causes for recent runs.
 
 ## Usage
-1. Train the model using historical CI failures.
-2. Use the trained model to suggest the root cause for new errors.
-3. Display the suggestions in a collapsible panel next to each error.
+1. Create a `CiLoglens` object.
+2. Add error causes using the `add_error_cause` method.
+3. Get the top error causes using the `get_top_error_causes` method.
+4. Filter error causes by pipeline, date range, or error type using the corresponding methods.
