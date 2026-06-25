@@ -1,44 +1,40 @@
 import json
 from dataclasses import dataclass
-from enum import Enum
-from typing import Dict
-
-class CITool(Enum):
-    AZURE_DEVOPS = "azure_devops"
-    GITHUB_ACTIONS = "github_actions"
-    JENKINS = "jenkins"
+from datetime import datetime, timedelta
 
 @dataclass
-class LogLensConfig:
-    ci_tool: CITool
-    ci_tool_config: Dict[str, str]
+class User:
+    id: int
+    log_lines_processed: int
+    created_at: datetime
 
-class LogLens:
-    def __init__(self, config: LogLensConfig):
-        self.config = config
+class CiLoglens:
+    def __init__(self):
+        self.users = {}
+        self.free_tier_limit = 100
+        self.free_tier_users = 0
 
-    def connect_ci_tool(self):
-        if self.config.ci_tool == CITool.AZURE_DEVOPS:
-            return self._connect_azure_devops()
-        elif self.config.ci_tool == CITool.GITHUB_ACTIONS:
-            return self._connect_github_actions()
-        elif self.config.ci_tool == CITool.JENKINS:
-            return self._connect_jenkins()
-        else:
-            raise ValueError("Unsupported CI tool")
+    def add_user(self, user_id):
+        if self.free_tier_users < self.free_tier_limit:
+            self.users[user_id] = User(user_id, 0, datetime.now())
+            self.free_tier_users += 1
+            return True
+        return False
 
-    def _connect_azure_devops(self):
-        # Simulate connection to Azure DevOps
-        return {"connected": True, "ci_tool": CITool.AZURE_DEVOPS.value}
+    def process_log_lines(self, user_id, log_lines):
+        if user_id in self.users:
+            user = self.users[user_id]
+            user.log_lines_processed += log_lines
+            if log_lines == 0:
+                return False
+            return True
+        return False
 
-    def _connect_github_actions(self):
-        # Simulate connection to GitHub Actions
-        return {"connected": True, "ci_tool": CITool.GITHUB_ACTIONS.value}
-
-    def _connect_jenkins(self):
-        # Simulate connection to Jenkins
-        return {"connected": True, "ci_tool": CITool.JENKINS.value}
-
-    def analyze_ci_logs(self):
-        # Simulate log analysis
-        return {"logs_analyzed": True}
+    def get_usage_metrics(self, user_id):
+        if user_id in self.users:
+            user = self.users[user_id]
+            return {
+                "log_lines_processed": user.log_lines_processed,
+                "created_at": user.created_at.isoformat()
+            }
+        return None

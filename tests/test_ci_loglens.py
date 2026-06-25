@@ -1,35 +1,33 @@
 import pytest
-from ci_loglens import LogLens, LogLensConfig, CITool
+from ci_loglens import CiLoglens
 
-def test_connect_azure_devops_ci_tool():
-    config = LogLensConfig(ci_tool=CITool.AZURE_DEVOPS, ci_tool_config={})
-    log_lens = LogLens(config)
-    result = log_lens.connect_ci_tool()
-    assert result["connected"] == True
-    assert result["ci_tool"] == CITool.AZURE_DEVOPS.value
+def test_add_user():
+    ci_loglens = CiLoglens()
+    assert ci_loglens.add_user(1) == True
+    assert ci_loglens.add_user(2) == True
+    assert ci_loglens.free_tier_users == 2
 
-def test_connect_github_actions_ci_tool():
-    config = LogLensConfig(ci_tool=CITool.GITHUB_ACTIONS, ci_tool_config={})
-    log_lens = LogLens(config)
-    result = log_lens.connect_ci_tool()
-    assert result["connected"] == True
-    assert result["ci_tool"] == CITool.GITHUB_ACTIONS.value
+def test_process_log_lines():
+    ci_loglens = CiLoglens()
+    ci_loglens.add_user(1)
+    assert ci_loglens.process_log_lines(1, 5000) == True
+    assert ci_loglens.process_log_lines(1, 0) == False
 
-def test_connect_jenkins_ci_tool():
-    config = LogLensConfig(ci_tool=CITool.JENKINS, ci_tool_config={})
-    log_lens = LogLens(config)
-    result = log_lens.connect_ci_tool()
-    assert result["connected"] == True
-    assert result["ci_tool"] == CITool.JENKINS.value
+def test_get_usage_metrics():
+    ci_loglens = CiLoglens()
+    ci_loglens.add_user(1)
+    ci_loglens.process_log_lines(1, 5000)
+    metrics = ci_loglens.get_usage_metrics(1)
+    assert metrics["log_lines_processed"] == 5000
 
-def test_analyze_ci_logs():
-    config = LogLensConfig(ci_tool=CITool.AZURE_DEVOPS, ci_tool_config={})
-    log_lens = LogLens(config)
-    result = log_lens.analyze_ci_logs()
-    assert result["logs_analyzed"] == True
+def test_free_tier_limit():
+    ci_loglens = CiLoglens()
+    for i in range(100):
+        ci_loglens.add_user(i)
+    assert ci_loglens.add_user(100) == False
 
-def test_connect_unsupported_ci_tool():
-    config = LogLensConfig(ci_tool="unsupported_tool", ci_tool_config={})
-    log_lens = LogLens(config)
-    with pytest.raises(ValueError):
-        log_lens.connect_ci_tool()
+def test_log_lines_processed_limit():
+    ci_loglens = CiLoglens()
+    ci_loglens.add_user(1)
+    assert ci_loglens.process_log_lines(1, 4000) == True
+    assert ci_loglens.process_log_lines(1, 1000) == True
